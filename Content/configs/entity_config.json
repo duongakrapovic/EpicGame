@@ -1,0 +1,15 @@
+{
+    "player": {
+        "type": "player",
+        "sprite": "sprites/player/boy_down_1.png",
+        "scale": 2.0,
+        "speed": 120
+    },
+
+    "oldman": {
+        "type": "npc",
+        "sprite": "sprites/npc/npcOldman/oldman_down_1.png",
+        "scale": 2.0,
+        "speed": 80
+    }
+}

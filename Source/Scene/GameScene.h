@@ -1,18 +1,15 @@
-#ifndef __GAME_SCENE_H__
-#define __GAME_SCENE_H__
-
+#pragma once
 #include "axmol.h"
+#include "world/World.h"
 
 class GameScene : public ax::Scene
 {
 public:
-    bool init() override;
-    void update(float delta) override;
+    virtual bool init();
+
+    void update(float dt) override;
+    CREATE_FUNC(GameScene);
 
 private:
-    ax::Layer* _worldLayer = nullptr;
-    ax::Sprite* _player    = nullptr;
-    ax::Sprite* _map       = nullptr;
+    World world;
 };
-
-#endif
