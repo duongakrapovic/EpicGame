@@ -7,56 +7,117 @@ namespace Systems
 // =========================
 // MOVEMENT SYSTEM
 // =========================
+// Trong ecs/Systems.h -> namespace Systems
+
 inline void Movement(World& w)
 {
-    for (auto& [e, input] : w.inputs)  // Chỉ lặp qua những thực thể có Input
+    for (auto& [e, input] : w.inputs)
     {
         auto& transform = w.transforms[e];
-        ax::Vec2 dir(0, 0);
+        auto& anim      = w.animations[e];
+        ax::Vec2 moveVec(0, 0);
 
+        // 1. Thu thập hướng di chuyển từ input
         if (input.up)
-            dir.y += 1;
+            moveVec.y += 1;
         if (input.down)
-            dir.y -= 1;
+            moveVec.y -= 1;
         if (input.left)
-            dir.x -= 1;
+            moveVec.x -= 1;
         if (input.right)
-            dir.x += 1;
+            moveVec.x += 1;
 
-        auto& anim = w.animations[e];
-
-        if (dir.length() > 0)
+        if (moveVec.length() > 0)
         {
-            dir.normalize();
-            transform.position += dir * 3.0f;
-            anim.moving = true;
+            // 2. Chuẩn hóa vector để di chuyển chéo không bị nhanh hơn
+            moveVec.normalize();
 
-            if (std::abs(dir.x) > std::abs(dir.y))
-                anim.currentDir = (dir.x > 0) ? AnimationComponent::RIGHT : AnimationComponent::LEFT;
+            // 3. Tính toán vận tốc dựa trên speed từ JSON (chia 60 để khớp FPS)
+            // Ví dụ speed = 120 -> 2 pixel mỗi frame
+            float currentSpeed = input.speed / 60.0f;
+            ax::Vec2 velocity  = moveVec * currentSpeed;
+
+            // 4. Xử lý va chạm (Collision)
+            if (w.collisions.count(e))
+            {
+                auto& col = w.collisions[e];
+                if (!col.isTrigger)
+                {
+                    // Kiểm tra va chạm trục X độc lập
+                    ax::Vec2 nextPosX = transform.position + ax::Vec2(velocity.x, 0);
+                    if (!w.map.isCollision(col.getWorldHitbox(nextPosX)))
+                    {
+                        transform.position.x = nextPosX.x;
+                    }
+
+                    // Kiểm tra va chạm trục Y độc lập
+                    ax::Vec2 nextPosY = transform.position + ax::Vec2(0, velocity.y);
+                    if (!w.map.isCollision(col.getWorldHitbox(nextPosY)))
+                    {
+                        transform.position.y = nextPosY.y;
+                    }
+                }
+                else
+                {
+                    // Nếu là Trigger (xuyên thấu) thì cộng thẳng vị trí
+                    transform.position += velocity;
+                }
+            }
             else
-                anim.currentDir = (dir.y > 0) ? AnimationComponent::UP : AnimationComponent::DOWN;
+            {
+                // Nếu không có thành phần collision
+                transform.position += velocity;
+            }
+
+            // 5. Cập nhật trạng thái Animation
+            anim.moving = true;
+            if (std::abs(moveVec.x) > std::abs(moveVec.y))
+                anim.currentDir = (moveVec.x > 0) ? AnimationComponent::RIGHT : AnimationComponent::LEFT;
+            else
+                anim.currentDir = (moveVec.y > 0) ? AnimationComponent::UP : AnimationComponent::DOWN;
         }
         else
         {
+            // Đứng yên
             anim.moving = false;
         }
     }
 }
-
 // =========================
 // RENDER SYSTEM
 // =========================
+static ax::DrawNode* debugDraw = nullptr;
+
 inline void Render(World& w)
 {
+    if (!debugDraw)
+    {
+        debugDraw = ax::DrawNode::create();
+        if (w.worldNode)
+            w.worldNode->addChild(debugDraw, 1000);
+    }
+    debugDraw->clear();
+
     for (auto& [e, transform] : w.transforms)
     {
+        // LÀM TRÒN TỌA ĐỘ: Cực kỳ quan trọng để khung đỏ không trôi lệch
+        float rx = std::round(transform.position.x);
+        float ry = std::round(transform.position.y);
+
         if (w.sprites.count(e))
         {
-            w.sprites[e].sprite->setPosition(transform.position);
+            w.sprites[e].sprite->setPosition(ax::Vec2(rx, ry));
+        }
+
+        if (w.collisions.count(e))
+        {
+            auto& col = w.collisions[e];
+            // Vẽ dựa trên tọa độ đã làm tròn (rx, ry)
+            ax::Rect hb = col.getWorldHitbox(ax::Vec2(rx, ry));
+            debugDraw->drawRect(hb.origin, hb.origin + hb.size, ax::Color4F::RED);
         }
     }
 }
-
 // =========================
 // ANIMATION SYSTEM
 // =========================
@@ -99,20 +160,38 @@ inline void Animation(World& w, float dt)
             continue;
         auto& sprite = w.sprites[e];
 
+        bool frameChanged = false;
+
         if (anim.moving)
         {
             anim.timer += dt;
             if (anim.timer > 0.2f)
             {
-                anim.timer = 0;
-                anim.frame = 1 - anim.frame;
-                sprite.sprite->setTexture(getPath(anim.basePath, anim.frame, anim.currentDir));
+                anim.timer   = 0;
+                anim.frame   = 1 - anim.frame;
+                frameChanged = true;
             }
         }
         else
         {
-            anim.frame = 0;
-            sprite.sprite->setTexture(getPath(anim.basePath, anim.frame, anim.currentDir));
+            if (anim.frame != 0)
+            {
+                anim.frame   = 0;
+                frameChanged = true;
+            }
+        }
+
+        // Nếu hướng thay đổi cũng coi như frame thay đổi
+        // (Logic đơn giản hóa để luôn đảm bảo texture được set Alias)
+
+        std::string newPath = getPath(anim.basePath, anim.frame, anim.currentDir);
+
+        // Luôn kiểm tra và cập nhật texture
+        auto texture = ax::Director::getInstance()->getTextureCache()->addImage(newPath);
+        if (texture)
+        {
+            texture->setAliasTexParameters();  // Buộc ảnh mới phải sắc nét
+            sprite.sprite->setTexture(texture);
         }
     }
 }

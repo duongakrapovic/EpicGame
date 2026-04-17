@@ -7,6 +7,7 @@
 #include "camera/CameraController.h"
 #include "map/MapManager.h"
 
+
 USING_NS_AX;
 
 class World
@@ -25,6 +26,7 @@ public:
     std::unordered_map<Entity, SpriteComponent> sprites;
     std::unordered_map<Entity, InputComponent> inputs;
     std::unordered_map<Entity, AnimationComponent> animations;
+    std::unordered_map<Entity, CollisionComponent> collisions;
 
     void init(ax::Scene* scene);
     void update(float dt);

@@ -18,29 +18,27 @@ void World::init(Scene* scene)
     fileUtils->addSearchPath("maps/chunks");
     fileUtils->addSearchPath("maps/tilesets");
 
-    auto fu = FileUtils::getInstance();
-    AXLOG("TMX: %d", fu->isFileExist("maps/chunks/chunk0_0.tmx"));
-    AXLOG("TSX: %d", fu->isFileExist("maps/tilesets/tileset.tsx"));
-    AXLOG("PNG: %d", fu->isFileExist("maps/tilesets/tileset.png"));
-
+    // Khởi tạo worldNode - "Cái sân khấu" chứa mọi thứ
     worldNode = ax::Node::create();
     scene->addChild(worldNode);
 
+    // THIẾT LẬP ZOOM: Phóng to 2 lần cho chuẩn Pixel Art
+    camera.setZoom(worldNode, 3.0f);
+
+    // Load cấu hình từ JSON
     auto configs = ConfigLoader::loadEntityConfig("configs/entity_config.json");
 
-    // tạo player tại (100,100)
+    // Tạo player tại tọa độ (100, 100)
+    // Lưu ý: EntityFactory sẽ tự động thêm Sprite vào worldNode
     playerEntity = EntityFactory::create(*this, configs["player"], 100.0f, 100.0f);
 
-    // sync transform (quan trọng)
-    transforms[playerEntity].position = Vec2(100, 100);
-
-    // LOAD 1 MAP DUY NHẤT
-
-    map.loadSingleChunk(worldNode);
+    // KHÔNG gọi loadSingleChunk nữa.
+    // Hệ thống sẽ tự động load chunk phù hợp trong lần update() đầu tiên.
 }
 
 void World::update(float dt)
 {
+    // 1. Cập nhật Input từ bàn phím vào Component của Player
     if (playerEntity != -1 && inputs.count(playerEntity))
     {
         auto& pInput = inputs[playerEntity];
@@ -50,12 +48,23 @@ void World::update(float dt)
         pInput.right = input.right;
     }
 
-    Systems::Movement(*this);
-    Systems::Animation(*this, dt);
-    Systems::Render(*this);
+    // 2. Chạy các hệ thống ECS logic (Thứ tự này rất quan trọng)
+    Systems::Movement(*this);       // Tính toán vị trí mới + Va chạm
+    Systems::Animation(*this, dt);  // Cập nhật frame hình
+    Systems::Render(*this);         // Làm tròn tọa độ và vẽ Sprite/Hitbox
 
-    if (playerEntity != -1 && sprites.count(playerEntity))
+    // 3. Quản lý Map và Camera
+    if (playerEntity != -1 && transforms.count(playerEntity) && sprites.count(playerEntity))
     {
-        camera.follow(worldNode, sprites[playerEntity].sprite);
+        auto pPos    = transforms[playerEntity].position;
+        auto pSprite = sprites[playerEntity].sprite;
+
+        // Tự động load/unload các chunk dựa trên vị trí hiện tại của Player
+        // Hàm này sẽ vẽ viền đỏ và log: "Loaded Chunk X, Y"
+        map.updateChunks(worldNode, pPos);
+
+        // Cập nhật camera để worldNode di chuyển ngược hướng player (giữ player ở giữa)
+        float currentZoom = worldNode->getScale();
+        camera.follow(worldNode, pSprite, currentZoom);
     }
 }

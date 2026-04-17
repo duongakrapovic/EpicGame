@@ -3,7 +3,7 @@
         "type": "player",
         "sprite": "sprites/player/boy_down_1.png",
         "scale": 2.0,
-        "speed": 120
+        "speed": 300
     },
 
     "oldman": {
