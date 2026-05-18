@@ -46,6 +46,7 @@ enum class CollisionType
 {
     None = 0,
     Player,
+    NPC,
     Enemy,
     Item,
     Wall

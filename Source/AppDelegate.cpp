@@ -1,12 +1,12 @@
 
 #include "AppDelegate.h"
-#include "scene/GameScene.h"
+#include "core/SceneManager.h"
 //#include "Scene/GameScene.h"
 
 #define USE_AUDIO_ENGINE 1
 
 #if USE_AUDIO_ENGINE
-#    include "audio/AudioEngine.h"
+#include "audio/AudioEngine.h"
 #endif
 
 USING_NS_AX;
@@ -35,6 +35,25 @@ void AppDelegate::initGLContextAttrs()
 
 bool AppDelegate::applicationDidFinishLaunching()
 {
+    auto ud = UserDefault::getInstance();
+
+    int resIndex = ud->getIntegerForKey("ResIndex", 0);
+
+    float w = 1280;
+    float h = 720;
+
+    if (resIndex == 1)
+    {
+        w = 1280;
+        h = 800;
+    }
+    else if (resIndex == 2)
+    {
+        w = 960;
+        h = 720;
+    }
+
+
     // initialize director
     auto director = Director::getInstance();
     auto glView   = director->getGLView();
@@ -43,7 +62,7 @@ bool AppDelegate::applicationDidFinishLaunching()
 #if (AX_TARGET_PLATFORM == AX_PLATFORM_WIN32) || (AX_TARGET_PLATFORM == AX_PLATFORM_MAC) || \
     (AX_TARGET_PLATFORM == AX_PLATFORM_LINUX)
         glView = GLViewImpl::createWithRect(
-            "EpicGame", ax::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+            "EpicGame", ax::Rect(0, 0, w, h));
 #else
         glView = GLViewImpl::create("EpicGame");
 #endif
@@ -57,14 +76,11 @@ bool AppDelegate::applicationDidFinishLaunching()
     director->setAnimationInterval(1.0f / 60);
 
     // Set the design resolution
-    glView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height,
+    glView->setDesignResolutionSize(w,h,
                                     ResolutionPolicy::SHOW_ALL);
 
     // create a scene. it's an autorelease object
-    auto scene = utils::createInstance<GameScene>();
-
-    // run
-    director->runWithScene(scene);
+    SceneManager::getInstance()->goToStartScene();
 
     return true;
 }

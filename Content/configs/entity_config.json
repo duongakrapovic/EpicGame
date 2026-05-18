@@ -3,13 +3,20 @@
         "type": "player",
         "sprite": "sprites/player/boy_down_1.png",
         "scale": 2.0,
-        "speed": 300
+        "speed": 300,
+        "hitbox_w": 11,
+        "hitbox_h": 12,
+        "offset_x": 0,
+        "offset_y": -2
     },
-
     "oldman": {
         "type": "npc",
         "sprite": "sprites/npc/npcOldman/oldman_down_1.png",
         "scale": 2.0,
-        "speed": 80
+        "speed": 80,
+        "hitbox_w": 14,
+        "hitbox_h": 14,
+        "offset_x": 0,
+        "offset_y": -5
     }
 }

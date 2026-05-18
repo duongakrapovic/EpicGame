@@ -16,11 +16,8 @@ Entity EntityFactory::create(World& world, const EntityConfig& cfg, float x, flo
         return -1;
     }
 
-    // --- ĐỒNG BỘ SCALE & KHỬ NHÒE ---
-    sprite->getTexture()->setAliasTexParameters();  // Làm nét pixel
-    sprite->setScale(1.0f);                         // Đưa về 1.0, việc to lên sẽ do Camera/WorldNode lo
-    // -------------------------------
-
+    sprite->getTexture()->setAliasTexParameters();
+    sprite->setScale(1.0f);
     world.worldNode->addChild(sprite, 1);
     world.sprites[e] = {sprite};
 
@@ -28,21 +25,39 @@ Entity EntityFactory::create(World& world, const EntityConfig& cfg, float x, flo
     world.animations[e]          = {};
     world.animations[e].basePath = cfg.sprite;
 
-    // 3. Tạo Hitbox (Giữ nguyên logic của bạn)
+    // =======================================================
+    // 3. KHỞI TẠO HITBOX CHUNG (Lấy thông số từ JSON)
+    // =======================================================
     CollisionComponent col;
-    col.hitbox          = ax::Rect(0, 0, 12, 14);// x y width height
-    //col.offset          = ax::Vec2(0, -5);
-    col.type            = CollisionType::Player;
-    col.isTrigger       = false;
-    world.collisions[e] = col;
+    col.hitbox    = ax::Rect(0, 0, cfg.hitbox_w, cfg.hitbox_h);
+    col.offset    = ax::Vec2(cfg.offset_x, cfg.offset_y);
+    col.isTrigger = false;
 
-    // 4. Player logic
+    // 4. PHÂN LOẠI COMPONENT ĐẶC THÙ THEO TYPE
     if (cfg.type == "player")
     {
-        world.inputs[e]    = {};
+        world.inputs[e]       = {};
         world.inputs[e].speed = cfg.speed;
-        world.playerEntity = e;
+        world.playerEntity    = e;
+
+        col.type = CollisionType::Player;
     }
+    else if (cfg.type == "npc")
+    {
+        col.type = CollisionType::NPC;
+    }
+    else if (cfg.type == "enemy")
+    {
+        col.type = CollisionType::Enemy;
+    }
+    else if (cfg.type == "item")
+    {
+        col.type      = CollisionType::Item;
+        col.isTrigger = true;  // Vật phẩm thì có thể đi xuyên qua để nhặt
+    }
+
+    // Cuối cùng, gán cái Hitbox đã được cấu hình xong vào World
+    world.collisions[e] = col;
 
     return e;
 }

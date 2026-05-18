@@ -12,7 +12,11 @@ Entity World::createEntity()
 
 void World::init(Scene* scene)
 {
-    input.setup(scene);
+    transforms.reserve(1500);
+    sprites.reserve(1500);
+    inputs.reserve(1500);
+    animations.reserve(1500);
+    collisions.reserve(1500);
 
     auto fileUtils = FileUtils::getInstance();
     fileUtils->addSearchPath("maps/chunks");
@@ -21,6 +25,8 @@ void World::init(Scene* scene)
     // Khởi tạo worldNode - "Cái sân khấu" chứa mọi thứ
     worldNode = ax::Node::create();
     scene->addChild(worldNode);
+    debugDraw = ax::DrawNode::create();
+    worldNode->addChild(debugDraw, 1000);
 
     // THIẾT LẬP ZOOM: Phóng to 2 lần cho chuẩn Pixel Art
     camera.setZoom(worldNode, 3.0f);
@@ -38,15 +44,6 @@ void World::init(Scene* scene)
 
 void World::update(float dt)
 {
-    // 1. Cập nhật Input từ bàn phím vào Component của Player
-    if (playerEntity != -1 && inputs.count(playerEntity))
-    {
-        auto& pInput = inputs[playerEntity];
-        pInput.up    = input.up;
-        pInput.down  = input.down;
-        pInput.left  = input.left;
-        pInput.right = input.right;
-    }
 
     // 2. Chạy các hệ thống ECS logic (Thứ tự này rất quan trọng)
     Systems::Movement(*this);       // Tính toán vị trí mới + Va chạm

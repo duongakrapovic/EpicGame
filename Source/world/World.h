@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include "ecs/Entity.h"
 #include "ecs/components.h"
-#include "core/InputManager.h"
 #include "camera/CameraController.h"
 #include "map/MapManager.h"
 
@@ -14,8 +13,8 @@ class World
 {
 public:
     ax::Node* worldNode = nullptr;
+    ax::DrawNode* debugDraw = nullptr;
 
-    InputManager input;
     CameraController camera;
     MapManager map;
 

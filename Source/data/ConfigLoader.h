@@ -8,6 +8,11 @@ struct EntityConfig
     std::string sprite;
     float scale;
     float speed;
+
+    float hitbox_w = 0.0f;
+    float hitbox_h = 0.0f;
+    float offset_x = 0.0f;
+    float offset_y = 0.0f;
 };
 
 class ConfigLoader
