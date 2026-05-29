@@ -1,18 +1,18 @@
-
 #include "AppDelegate.h"
 #include "core/SceneManager.h"
-//#include "Scene/GameScene.h"
+// #include "Scene/GameScene.h"
 
 #define USE_AUDIO_ENGINE 1
 
 #if USE_AUDIO_ENGINE
-#include "audio/AudioEngine.h"
+#    include "audio/AudioEngine.h"
 #endif
 
 USING_NS_AX;
 
 static ax::Size designResolutionSize = ax::Size(1280, 720);
-// kích thước của sổ game 
+// kích thước của sổ game
+
 AppDelegate::AppDelegate() {}
 
 AppDelegate::~AppDelegate() {}
@@ -37,7 +37,10 @@ bool AppDelegate::applicationDidFinishLaunching()
 {
     auto ud = UserDefault::getInstance();
 
-    int resIndex = ud->getIntegerForKey("ResIndex", 0);
+    // 1. ĐỌC TOÀN BỘ CẤU HÌNH TỪ Ổ CỨNG
+    int resIndex      = ud->getIntegerForKey("ResIndex", 0);
+    bool isFullscreen = ud->getBoolForKey("IsFullscreen", false);
+    bool isShowFPS    = ud->getBoolForKey("ShowFPS", false);
 
     float w = 1280;
     float h = 720;
@@ -53,31 +56,39 @@ bool AppDelegate::applicationDidFinishLaunching()
         h = 720;
     }
 
-
     // initialize director
     auto director = Director::getInstance();
     auto glView   = director->getGLView();
+
     if (!glView)
     {
 #if (AX_TARGET_PLATFORM == AX_PLATFORM_WIN32) || (AX_TARGET_PLATFORM == AX_PLATFORM_MAC) || \
     (AX_TARGET_PLATFORM == AX_PLATFORM_LINUX)
-        glView = GLViewImpl::createWithRect(
-            "EpicGame", ax::Rect(0, 0, w, h));
+        // SỬA LỖI TẠI ĐÂY: Tạo trực tiếp Fullscreen nếu có cấu hình, tránh lệch Viewport
+        if (isFullscreen)
+        {
+            glView = GLViewImpl::createWithFullScreen("EpicGame");
+        }
+        else
+        {
+            glView = GLViewImpl::createWithRect("EpicGame", ax::Rect(0, 0, w, h));
+        }
 #else
         glView = GLViewImpl::create("EpicGame");
 #endif
         director->setGLView(glView);
     }
 
-    // turn on display FPS
-    director->setStatsDisplay(true);
+    // (Đã xóa bỏ phần ép kiểu dynamic_cast và setFullscreen() dư thừa ở đây)
+
+    // 2. ÁP DỤNG CÀI ĐẶT FPS
+    director->setStatsDisplay(isShowFPS);
 
     // set FPS. the default value is 1.0/60 if you don't call this
     director->setAnimationInterval(1.0f / 60);
 
-    // Set the design resolution
-    glView->setDesignResolutionSize(w,h,
-                                    ResolutionPolicy::SHOW_ALL);
+    // 3. CHỐNG MÉO HÌNH (Sử dụng SHOW_ALL thay vì NO_BORDER để thêm viền đen nếu cần)
+    glView->setDesignResolutionSize(w, h, ResolutionPolicy::SHOW_ALL);
 
     // create a scene. it's an autorelease object
     SceneManager::getInstance()->goToStartScene();

@@ -1,7 +1,7 @@
 #include "scene/settings/SettingsLayer.h"
 #include "scene/StartScene.h"
 #include <algorithm>
-#include "input/MenuInput.h" 
+#include "input/MenuInput.h"
 
 USING_NS_AX;
 using namespace ax::ui;
@@ -22,14 +22,10 @@ bool SettingsLayer::init(bool isFromGame, std::function<void()> onCloseCallback)
 {
     _isFromGame      = isFromGame;
     _onCloseCallback = onCloseCallback;
-
     if (!LayerColor::initWithColor(Color4B(0, 0, 0, 180)))
         return false;
 
-    
-    auto ud = ax::UserDefault::getInstance();
-
-    // Đọc số cũ, nếu chưa từng lưu bao giờ thì dùng số mặc định (ví dụ: 75, true, false)
+    auto ud       = ax::UserDefault::getInstance();
     _masterVol    = ud->getIntegerForKey("MasterVol", 75);
     _musicVol     = ud->getIntegerForKey("MusicVol", 75);
     _sfxVol       = ud->getIntegerForKey("SFXVol", 75);
@@ -37,29 +33,30 @@ bool SettingsLayer::init(bool isFromGame, std::function<void()> onCloseCallback)
     _isFullscreen = ud->getBoolForKey("IsFullscreen", false);
     _resIndex     = ud->getIntegerForKey("ResIndex", 0);
 
-
     createMainPanel();
     createLeftMenu();
     switchTab(0);
     _menuInput = new MenuInput(this);
-
     return true;
 }
 
-// 5 HÀM ĐIỀU KHIỂN ĐÃ ĐƯỢC XẺ NHỎ 
-
 void SettingsLayer::navigateUp()
 {
-    // size() trả về size_t (unsigned), nhưng logic menu đang dùng int.
-    // Cast về int để tránh warning kiểu dữ liệu và tránh bug khi so sánh/chạy modulo.
-    int maxTabs = _isFromGame ? static_cast<int>(_tabButtons.size()) + 1
-                              : static_cast<int>(_tabButtons.size());
+    if (_isDropdownOpen)
+    {
+        auto& row           = _activeRows[_currentRowIndex];
+        _dropdownHoverIndex = (_dropdownHoverIndex - 1 + row.dropdownItems.size()) % row.dropdownItems.size();
+        updateFocusUI();
+        return;
+    }
+
+    int maxTabs = _isFromGame ? static_cast<int>(_tabButtons.size()) + 1 : static_cast<int>(_tabButtons.size());
     if (_currentFocusLevel == 0)
     {
         _currentTabIndex = (_currentTabIndex - 1 + maxTabs) % maxTabs;
         switchTab(_currentTabIndex);
     }
-    else if (_currentFocusLevel == 1 || _currentFocusLevel == 2)
+    else if (_currentFocusLevel == 1)
     {
         if (!_activeRows.empty())
             _currentRowIndex = (_currentRowIndex - 1 + _activeRows.size()) % _activeRows.size();
@@ -69,17 +66,21 @@ void SettingsLayer::navigateUp()
 
 void SettingsLayer::navigateDown()
 {
-    // size() trả về size_t (unsigned), nhưng logic menu đang dùng int.
-    // Cast về int để tránh warning kiểu dữ liệu và tránh bug khi so sánh/chạy modulo.
-    int maxTabs = _isFromGame ? static_cast<int>(_tabButtons.size()) + 1
-                              : static_cast<int>(_tabButtons.size());
-    // _tabButtons.size() trả về size_t còn _currentTabIndex trả về int là số signed.
+    if (_isDropdownOpen)
+    {
+        auto& row           = _activeRows[_currentRowIndex];
+        _dropdownHoverIndex = (_dropdownHoverIndex + 1) % row.dropdownItems.size();
+        updateFocusUI();
+        return;
+    }
+
+    int maxTabs = _isFromGame ? static_cast<int>(_tabButtons.size()) + 1 : static_cast<int>(_tabButtons.size());
     if (_currentFocusLevel == 0)
     {
         _currentTabIndex = (_currentTabIndex + 1) % maxTabs;
         switchTab(_currentTabIndex);
     }
-    else if (_currentFocusLevel == 1 || _currentFocusLevel == 2)
+    else if (_currentFocusLevel == 1)
     {
         if (!_activeRows.empty())
             _currentRowIndex = (_currentRowIndex + 1) % _activeRows.size();
@@ -89,31 +90,57 @@ void SettingsLayer::navigateDown()
 
 void SettingsLayer::navigateLeft()
 {
+    if (_isDropdownOpen)
+    {
+        _isDropdownOpen = false;  // Đang xổ danh sách thì bấm Trái để đóng
+        updateFocusUI();
+        return;
+    }
+
     if (_currentFocusLevel == 1)
     {
-        _currentFocusLevel = 0;
+        auto& r = _activeRows[_currentRowIndex];
+
+        if (r.type == RowType::SPINBOX)
+        {
+            // SpinBox (Âm thanh): Bấm trái để giảm volume
+            if (r.onLeftAction)
+                r.onLeftAction(r.valueLabel);
+        }
+        else if (r.type == RowType::TOGGLE)
+        {
+            // Nút Gạt (FPS): Kiểm tra trạng thái hiện tại
+            if (r.toggleState == true)
+            {
+                // Nếu đang ON -> Bấm trái để gạt về OFF
+                r.toggleState = false;
+                if (r.onToggle)
+                    r.onToggle(false);
+            }
+            else
+            {
+                // Nếu đã OFF sẵn rồi -> Bấm trái để thoát ra Menu Trái
+                _currentFocusLevel = 0;
+            }
+        }
+        else
+        {
+            // Dropdown và Button: Không có tương tác Trái/Phải -> Thoát thẳng ra Menu Trái
+            _currentFocusLevel = 0;
+        }
+
         updateFocusUI();
-    }
-    else if (_currentFocusLevel == 2)
-    {
-        if (_currentEditColIndex == 1)
-        {
-            _currentEditColIndex = 0;
-            updateFocusUI();
-        }
-        else if (_currentEditColIndex == 0)
-        {
-            _currentFocusLevel = 1;
-            updateFocusUI();
-        }
     }
 }
 
 void SettingsLayer::navigateRight()
 {
+    if (_isDropdownOpen)
+        return;
+
     if (_currentFocusLevel == 0)
     {
-        if (_currentTabIndex < _tabButtons.size() && !_activeRows.empty())
+        if (!_activeRows.empty())
         {
             _currentFocusLevel = 1;
             _currentRowIndex   = 0;
@@ -122,28 +149,44 @@ void SettingsLayer::navigateRight()
     }
     else if (_currentFocusLevel == 1)
     {
-        _currentFocusLevel   = 2;
-        _currentEditColIndex = 0;
-        updateFocusUI();
-    }
-    else if (_currentFocusLevel == 2)
-    {
-        if (_currentEditColIndex == 0)
+        auto& r = _activeRows[_currentRowIndex];
+        // Bấm Phải gạt SpinBox hoặc Toggle sang ON luôn
+        if (r.type == RowType::SPINBOX)
         {
-            _currentEditColIndex = 1;
-            updateFocusUI();
+            if (r.onRightAction)
+                r.onRightAction(r.valueLabel);
         }
+        else if (r.type == RowType::TOGGLE)
+        {
+            r.toggleState = true;
+            if (r.onToggle)
+                r.onToggle(true);
+        }
+        updateFocusUI();
     }
 }
 
 void SettingsLayer::confirmSelection()
 {
+    if (_isDropdownOpen)
+    {
+        auto& row = _activeRows[_currentRowIndex];
+        if (row.onDropdownSelect)
+            row.onDropdownSelect(_dropdownHoverIndex);
+
+        // CẬP NHẬT CHỮ HIỂN THỊ MÀ KHÔNG CẦN SWITCHTAB
+        if (row.valueLabel)
+            row.valueLabel->setString(row.dropdownItems[_dropdownHoverIndex]->getString());
+
+        _isDropdownOpen = false;
+        updateFocusUI();
+        return;
+    }
+
     if (_currentFocusLevel == 0)
     {
         if (_currentTabIndex == _tabButtons.size())
-        {
             ax::Director::getInstance()->replaceScene(ax::TransitionFade::create(0.5f, StartScene::create()));
-        }
         else if (!_activeRows.empty())
         {
             _currentFocusLevel = 1;
@@ -153,22 +196,40 @@ void SettingsLayer::confirmSelection()
     }
     else if (_currentFocusLevel == 1)
     {
-        _currentFocusLevel   = 2;
-        _currentEditColIndex = 0;
-        updateFocusUI();
-    }
-    else if (_currentFocusLevel == 2)
-    {
-        auto& r = _activeRows[_currentRowIndex];
-        if (_currentEditColIndex == 0 && r.onLeftAction)
-            r.onLeftAction(r.valueLabel);
-        else if (_currentEditColIndex == 1 && r.onRightAction)
-            r.onRightAction(r.valueLabel);
+        auto& row = _activeRows[_currentRowIndex];
+        if (row.type == RowType::DROPDOWN)
+        {
+            _isDropdownOpen     = true;
+            _dropdownHoverIndex = 0;
+            updateFocusUI();
+        }
+        if (row.type == RowType::BUTTON || row.type == RowType::KEYBIND)
+        {
+            // Kích hoạt hàm đổi phím (onAction) mà ta đã định nghĩa ở file Controls
+            if (row.onAction)
+            {
+                row.onAction();
+            }
+        }
     }
 }
 
 void SettingsLayer::onClose()
 {
+    // ESC có nhiệm vụ lùi lại dần dần: Đóng Dropdown -> Về Menu Trái -> Thoát
+    if (_isDropdownOpen)
+    {
+        _isDropdownOpen = false;
+        updateFocusUI();
+        return;
+    }
+    if (_currentFocusLevel == 1)
+    {
+        _currentFocusLevel = 0;
+        updateFocusUI();
+        return;
+    }
+
     if (_onCloseCallback)
         _onCloseCallback();
     this->removeFromParent();

@@ -11,22 +11,18 @@ void CameraController::setZoom(Node* worldNode, float zoom)
     }
 }
 
-void CameraController::follow(ax::Node* worldNode, ax::Node* target, float zoom)
+void CameraController::follow(ax::Node* worldNode, ax::Vec2 targetPos, float zoom)
 {
-    if (!worldNode || !target)
+    if (!worldNode)
         return;
 
-    // 1. Lấy vị trí thực của Player trong không gian 1.0
-    ax::Vec2 playerPos = target->getPosition();
-
-    // 2. Lấy tâm màn hình
+    // 1. Lấy tâm màn hình
     ax::Size visibleSize  = ax::Director::getInstance()->getVisibleSize();
     ax::Vec2 screenCenter = ax::Vec2(visibleSize.width / 2, visibleSize.height / 2);
 
-    // 3. Công thức Camera cho World đã được Scale:
-    // Khi worldNode scale lên, mọi thứ bên trong nó to lên.
-    // Để Player ở giữa, ta phải dịch chuyển worldNode ngược lại một khoảng tương ứng với vị trí Player * zoom.
-    ax::Vec2 newWorldPos = screenCenter - (playerPos * zoom);
+    // 2. Công thức Camera cho World đã được Scale:
+    // Dùng trực tiếp tọa độ lõi (targetPos) không bị rung khi Sprite bị đẩy
+    ax::Vec2 newWorldPos = screenCenter - (targetPos * zoom);
 
     worldNode->setPosition(newWorldPos);
 }

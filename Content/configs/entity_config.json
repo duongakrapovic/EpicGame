@@ -1,22 +1,53 @@
 {
     "player": {
         "type": "player",
-        "sprite": "sprites/player/boy_down_1.png",
-        "scale": 2.0,
+        "sprite": "sprites/player/boy",
+        "scale": 1.2,
         "speed": 300,
         "hitbox_w": 11,
         "hitbox_h": 12,
         "offset_x": 0,
-        "offset_y": -2
+        "offset_y": -2,
+        "max_hp": 100,
+        "max_mana": 50,
+        "damage": 20,
+        "atk_cooldown": 0.3,
+        "atk_len": 15.0,
+        "atk_thick": 20.0,
+        "atk_offset": 8.0,
+        "sprite_shift": 13.0,
+        "frames": 2
     },
     "oldman": {
         "type": "npc",
-        "sprite": "sprites/npc/npcOldman/oldman_down_1.png",
-        "scale": 2.0,
-        "speed": 80,
-        "hitbox_w": 14,
-        "hitbox_h": 14,
+        "sprite": "sprites/npc/npcOldman/oldman",
+        "scale": 1.2,
+        "speed": 20,
+        "hitbox_w": 11,
+        "hitbox_h": 12,
         "offset_x": 0,
-        "offset_y": -5
+        "offset_y": -2,
+        "max_hp": 9999,
+        "damage": 0,
+        "atk_cooldown": 0.5,
+        "frames": 2
+    },
+    "orc": {
+        "type": "enemy",
+        "sprite": "sprites/npc/orc/orc",
+        "scale": 1.2,
+        "speed": 60,
+        "hitbox_w": 11,
+        "hitbox_h": 12,
+        "offset_x": 0,
+        "offset_y": -2,
+        "max_hp": 50,
+        "damage": 10,
+        "atk_cooldown": 1.5,
+        "atk_len": 23.0,
+        "atk_thick": 18.0,
+        "atk_offset": 8.0,
+        "sprite_shift": 13.0,
+        "frames": 2
     }
 }

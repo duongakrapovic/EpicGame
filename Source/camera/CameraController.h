@@ -10,7 +10,7 @@ public:
      * @param target Thường là sprite của Player
      * @param zoom Tỉ lệ phóng to hiện tại của worldNode
      */
-    void follow(ax::Node* worldNode, ax::Node* target, float zoom);
+    void follow(ax::Node* worldNode, ax::Vec2 targetPos, float zoom);
 
     /**
      * @brief Thiết lập mức độ phóng to cho toàn bộ thế giới

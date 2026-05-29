@@ -7,89 +7,73 @@ using namespace ax::ui;
 
 void SettingsLayer::buildDisplayTab()
 {
-    // 1. Reset mảng hàng để tránh lỗi tràn dữ liệu (Quan trọng nhất)
-    _activeRows.clear();
-    _currentRowIndex = 0;
+    // Đọc dữ liệu (Chỉ tạo biến tạm cho những thứ cần nút Apply)
+    _tempResIndex     = _resIndex;
+    _tempIsFullscreen = _isFullscreen;
 
-    // 2. Load dữ liệu
-    auto ud    = UserDefault::getInstance();
-    _resIndex  = ud->getIntegerForKey("ResIndex", 0);
-    _isShowFPS = ud->getBoolForKey("ShowFPS", false);
-    Director::getInstance()->setStatsDisplay(_isShowFPS);
+    // 1. DROPDOWN: CHẾ ĐỘ MÀN HÌNH
+    std::vector<std::string> modeOpts = {"Windowed", "Fullscreen"};
+    createDropdownRow(420, "DISPLAY MODE", modeOpts, _tempIsFullscreen ? 1 : 0,
+                      [this](int idx) { _tempIsFullscreen = (idx == 1); });
 
-    // 3. Hàm thực thi đổi độ phân giải
-    auto applyResolution = [this](int index) {
+    // 2. DROPDOWN: ĐỘ PHÂN GIẢI
+    std::vector<std::string> resOpts = {"1280 x 720 (16:9)", "1280 x 800 (16:10)", "960 x 720 (4:3)"};
+    createDropdownRow(340, "RESOLUTION", resOpts, _tempResIndex, [this](int idx) { _tempResIndex = idx; });
+
+    // 3. BUTTON: ÁP DỤNG THAY ĐỔI (Chỉ áp dụng Màn hình & Độ phân giải)
+    createButtonRow(260, "--- APPLY CHANGES ---", [this]() {
+        _resIndex     = _tempResIndex;
+        _isFullscreen = _tempIsFullscreen;
+
         auto glview = dynamic_cast<ax::GLViewImpl*>(Director::getInstance()->getGLView());
-        if (!glview)
-            return;
-
-        float w = 1280.0f, h = 720.0f;
-        if (index == 0)
+        if (glview)
         {
-            w = 1280.0f;
-            h = 720.0f;
-        }
-        else if (index == 1)
-        {
-            w = 1280.0f;
-            h = 800.0f;
-        }
-        else if (index == 2)
-        {
-            w = 960.0f;
-            h = 720.0f;
+            float w = 1280, h = 720;
+            if (_resIndex == 1)
+                h = 800;
+            else if (_resIndex == 2)
+            {
+                w = 960;
+                h = 720;
+            }
+
+            if (_isFullscreen)
+            {
+                glview->setFullscreen();
+            }
+            else
+            {
+                glview->setWindowed(w, h);
+            }
+
+            // Tự fill viền đen nếu màn hình không cùng tỷ lệ
+            glview->setDesignResolutionSize(w, h, ResolutionPolicy::SHOW_ALL);
+
+            if (_mainPanel)
+            {
+                _mainPanel->setPosition(Vec2(w / 2.0f, h / 2.0f));
+            }
         }
 
-        glview->setWindowed(w, h);
-        glview->setDesignResolutionSize(w, h, ResolutionPolicy::NO_BORDER);
+        auto ud = UserDefault::getInstance();
+        ud->setIntegerForKey("ResIndex", _resIndex);
+        ud->setBoolForKey("IsFullscreen", _isFullscreen);
+        ud->flush();
 
-        if (_mainPanel)
-        {
-            _mainPanel->setPosition(Vec2(w / 2.0f, h / 2.0f));
-            float scale = std::min({1.0f, w / 1280.0f, h / 720.0f});
-            _mainPanel->setScale(scale);
-        }
-
-        UserDefault::getInstance()->setIntegerForKey("ResIndex", index);
-        UserDefault::getInstance()->flush();
-
-        // Load lại tab để cập nhật trạng thái text "Running"
+        // Vẽ lại UI để cập nhật các dòng hiển thị sau khi áp dụng
         this->switchTab(0);
-    };
+    });
 
-    // 4. TIÊU ĐỀ
-    std::vector<std::string> resOptions = {"1280 x 720", "1280 x 800", "960 x 720"};
-    auto title                          = Label::createWithSystemFont("--- SELECT RESOLUTION ---", "Arial", 24);
-    title->setPosition(Vec2(400, 480));
-    title->setTextColor(Color4B::YELLOW);
-    _mainPanel->addChild(title);
+    // 4. TOGGLE: HIỂN THỊ FPS (Gạt là ăn luôn, không chờ Apply)
+    createToggleRow(160, "SHOW FPS", _isShowFPS, [this](bool isOn) {
+        _isShowFPS = isOn;  // Lưu thẳng vào biến thật
 
-    // 5. TẠO DANH SÁCH LỰA CHỌN (3 hàng dọc)
-    for (int i = 0; i < (int)resOptions.size(); ++i)
-    {
-        std::string name = resOptions[i];
-        if (i == _resIndex)
-            name += " (RUNNING)";
-
-        // Dùng createSpinBoxRow nhưng xử lý để nó thành 1 nút xác nhận duy nhất
-        createSpinBoxRow(400 - (i * 45), name, "SELECT",
-                         [=, this](Label* l) { applyResolution(i); },  // Bấm trái -> Đổi
-                         [=, this](Label* l) { applyResolution(i); }   // Bấm phải -> Đổi
-        );
-    }
-
-    // 6. HÀNG FPS
-    createSpinBoxRow(200, "SHOW FPS", _isShowFPS ? "ON" : "OFF", [this](Label* l) {
-        _isShowFPS = !_isShowFPS;
-        l->setString(_isShowFPS ? "ON" : "OFF");
-        UserDefault::getInstance()->setBoolForKey("ShowFPS", _isShowFPS);
-        UserDefault::getInstance()->flush();
+        // Thực thi lệnh của Engine NGAY LẬP TỨC
         Director::getInstance()->setStatsDisplay(_isShowFPS);
-    }, [this](Label* l) {
-        _isShowFPS = !_isShowFPS;
-        l->setString(_isShowFPS ? "ON" : "OFF");
-        UserDefault::getInstance()->setBoolForKey("ShowFPS", _isShowFPS);
-        UserDefault::getInstance()->flush();
-        Director::getInstance()->setStatsDisplay(_isShowFPS);
+
+        // Lưu vào ổ cứng NGAY LẬP TỨC
+        auto ud = UserDefault::getInstance();
+        ud->setBoolForKey("ShowFPS", _isShowFPS);
+        ud->flush();
     });
 }

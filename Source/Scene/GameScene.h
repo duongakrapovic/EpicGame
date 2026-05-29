@@ -24,4 +24,6 @@ private:
     GameInput* _gameInput = nullptr; //Quản lý input gameplay
    
     bool _isGamePaused = false;  // Biến cờ kiểm tra trạng thái pause
+
+    float _footstepTimer = 0.4f; // Bộ đếm giờ cho tiếng bước chân(Set sẵn 0.4 để bước phát kêu luôn)
 };

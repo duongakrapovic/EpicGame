@@ -1,6 +1,7 @@
 #include "scene/GameScene.h"
 #include "scene/settings/SettingsLayer.h"
-#include "ecs/Systems.h"
+#include "ecs/systems/Systems.h"
+#include "audio/AudioManager.h"
 USING_NS_AX;
 
 bool GameScene::init()
@@ -14,20 +15,42 @@ bool GameScene::init()
     _gameInput = new GameInput(this);
 
     _gameInput->onEscapePressed = [this]() { this->openSettings(); };
+
+    AudioManager::getInstance()->playBGM("sound/music/BlueBoyAdventure.wav", true);
     return true;
 }
 
 void GameScene::update(float dt)
 {
     // Tránh update ECS World khi đang mở Settings
-    if (_isGamePaused)  return;
+    if (_isGamePaused)
+        return;
 
-    Systems::UpdateInput(world, _gameInput);
+    // [ĐÃ SỬA] Chạy update tổng của World và truyền thẳng GameInput vào
+    world.update(dt, _gameInput);
 
-    world.update(dt);
+    // Kiểm tra xem người chơi có đang giữ bất kỳ phím di chuyển nào không (WASD)
+    bool isMoving = _gameInput->isKeyPressed(ax::EventKeyboard::KeyCode::KEY_W) ||
+                    _gameInput->isKeyPressed(ax::EventKeyboard::KeyCode::KEY_S) ||
+                    _gameInput->isKeyPressed(ax::EventKeyboard::KeyCode::KEY_A) ||
+                    _gameInput->isKeyPressed(ax::EventKeyboard::KeyCode::KEY_D);
+
+    if (isMoving)
+    {
+        _footstepTimer += dt;
+        if (_footstepTimer >= 0.4f)
+        {
+            AudioManager::getInstance()->playSFX("sound/sfx/stairs.wav");
+            _footstepTimer = 0.0f;
+        }
+    }
+    else
+    {
+        // Khi nhả phím, reset lại để lần bấm tiếp theo phát tiếng ngay lập tức
+        _footstepTimer = 0.4f;
+    }
 }
 
-// Hàm public mới thay thế hoàn toàn cho onKeyPressed cũ
 void GameScene::openSettings()
 {
     // CHỈ xử lý mở Settings nếu game đang KHÔNG tạm dừng
@@ -45,6 +68,7 @@ void GameScene::openSettings()
         this->addChild(settingsLayer, 999);
     }
 }
+
 GameScene::~GameScene()
 {
     AX_SAFE_DELETE(_gameInput);

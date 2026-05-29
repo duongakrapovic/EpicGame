@@ -36,6 +36,17 @@ void MenuInput::onKeyPressed(EventKeyboard::KeyCode keyCode, Event* event)
     if (settings)
     {
         event->stopPropagation();  // Chặn phím không cho lọt xuống Game
+
+        //KIỂM TRA TRẠNG THÁI ĐỔI PHÍM
+        if (settings->isBindingKey())
+        {
+            // Gửi thẳng phím vừa gõ sang cho SettingsLayer xử lý và lưu lại
+            settings->processKeybind(keyCode);
+
+            // Dừng tại đây, không chạy xuống khối switch bên dưới (chặn cuộn menu)
+            return;
+        }
+
         switch (keyCode)
         {
         case EventKeyboard::KeyCode::KEY_ESCAPE:

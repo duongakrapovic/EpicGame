@@ -1,7 +1,8 @@
 #include "scene/StartScene.h"
 #include "core/SceneManager.h"
 #include "scene/settings/SettingsLayer.h"
-#include "input/MenuInput.h" 
+#include "input/MenuInput.h"
+#include "audio/AudioManager.h"
 
 USING_NS_AX;
 
@@ -58,6 +59,8 @@ bool StartScene::init()
     updateSelectionVisuals();
 
     new MenuInput(this);
+
+    AudioManager::getInstance()->playBGM("sound/music/BlueBoyAdventure.wav", true);
 
     return true;
 }

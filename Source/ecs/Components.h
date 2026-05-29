@@ -2,29 +2,34 @@
 #include "axmol.h"
 #include <string>
 
-// Vị trí
 struct TransformComponent
 {
     ax::Vec2 position;
 };
 
-// Sprite hiển thị
 struct SpriteComponent
 {
     ax::Sprite* sprite = nullptr;
 };
 
-// Input điều khiển
 struct InputComponent
 {
-    bool up    = false;
-    bool down  = false;
-    bool left  = false;
-    bool right = false;
-    float speed = 0.0f;
+    bool up       = false;
+    bool down     = false;
+    bool left     = false;
+    bool right    = false;
+    bool attack   = false;
+    bool interact = false;
+    float speed   = 0.0f;
 };
 
-// Animation
+enum class AnimState
+{
+    IDLE,
+    WALK,
+    ATTACK
+};
+
 struct AnimationComponent
 {
     enum Direction
@@ -34,14 +39,16 @@ struct AnimationComponent
         LEFT,
         RIGHT
     };
-    Direction currentDir = DOWN;
-    float timer          = 0;
-    int frame            = 0;
-    bool moving          = false;
+    Direction currentDir   = DOWN;
+    AnimState currentState = AnimState::IDLE;
+    float timer            = 0;
+    int frame              = 0;
+    int maxFrames          = 1;
+    bool moving            = false;
+    bool hasWeapon         = false;
     std::string basePath;
 };
 
-// --- HỆ THỐNG HITBOX MỚI ---
 enum class CollisionType
 {
     None = 0,
@@ -54,15 +61,53 @@ enum class CollisionType
 
 struct CollisionComponent
 {
-    ax::Rect hitbox;  // Kích thước vùng va chạm (VD: 8x6)
-    ax::Vec2 offset;  // Độ lệch so với tâm nhân vật (VD: chân)
+    ax::Rect hitbox;
+    ax::Vec2 offset;
     CollisionType type = CollisionType::None;
-    bool isTrigger     = false;  // True nếu chỉ để nhặt đồ, không chặn di chuyển
+    bool isTrigger     = false;
 
-    // Lấy hình chữ nhật va chạm thực tế trong thế giới game
     ax::Rect getWorldHitbox(const ax::Vec2& entityPos) const
     {
         return ax::Rect(entityPos.x + offset.x - hitbox.size.width / 2, entityPos.y + offset.y - hitbox.size.height / 2,
                         hitbox.size.width, hitbox.size.height);
     }
+};
+
+struct HealthComponent
+{
+    int hp                = 100;
+    int maxHp             = 100;
+    int mana              = 50;
+    int maxMana           = 50;
+    bool isDead           = false;
+    float invincibleTimer = 0.0f;  // Đồng hồ đếm ngược I-Frames khi trúng đòn
+};
+
+struct CombatComponent
+{
+    int damage           = 10;
+    float attackCooldown = 0.5f;  // Thời gian giãn cách giữa các đòn đánh
+    float cooldownTimer  = 0.0f;
+    bool isAttacking     = false;
+    ax::Rect currentAttackBox;
+    float attackBoxLength    = 30.0f;
+    float attackBoxThickness = 10.0f;
+    float attackOffset       = 15.0f;
+    float spriteShift        = 0.0f;
+};
+
+enum class AIState
+{
+    IDLE,
+    PATROL,
+    CHASE,
+    ATTACK
+};
+
+struct AIComponent
+{
+    AIState currentState = AIState::IDLE;
+    float timer          = 0.0f;
+    ax::Vec2 targetPos   = ax::Vec2::ZERO;
+    ax::Vec2 homePos     = ax::Vec2::ZERO;
 };
