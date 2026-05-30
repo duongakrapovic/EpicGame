@@ -92,6 +92,8 @@ bool AppDelegate::applicationDidFinishLaunching()
 
     // create a scene. it's an autorelease object
     SceneManager::getInstance()->goToStartScene();
+    //SceneManager::getInstance()->goToGameScene();
+    //SceneManager::getInstance()->goToGameOverScene();
 
     return true;
 }

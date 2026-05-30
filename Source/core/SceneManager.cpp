@@ -1,7 +1,7 @@
 #include "core/SceneManager.h"
 #include "scene/StartScene.h"
 #include "scene/GameScene.h"
-// #include "scene/EndScene.h" // Sẽ mở comment khi bạn làm EndScene
+#include "scene/GameOverScene.h" // Sẽ mở comment khi bạn làm EndScene
 
 USING_NS_AX;
 
@@ -40,7 +40,8 @@ void SceneManager::goToGameScene()
     Director::getInstance()->replaceScene(TransitionFade::create(1.0f, scene, Color3B::BLACK));
 }
 
-void SceneManager::goToEndScene()
+void SceneManager::goToGameOverScene()
 {
-    // Để trống chờ implement EndScene
+    auto scene = utils::createInstance<GameOverScene>();
+    Director::getInstance()->replaceScene(TransitionFade::create(1.0f, scene, Color3B::BLACK));
 }

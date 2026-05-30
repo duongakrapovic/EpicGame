@@ -8,7 +8,7 @@ public:
 
     void goToStartScene();
     void goToGameScene();
-    void goToEndScene();
+    void goToGameOverScene();
 
 private:
     SceneManager();

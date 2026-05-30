@@ -2,6 +2,7 @@
 #include "scene/settings/SettingsLayer.h"
 #include "ecs/systems/Systems.h"
 #include "audio/AudioManager.h"
+#include "core/SceneManager.h"
 USING_NS_AX;
 
 bool GameScene::init()
@@ -28,6 +29,18 @@ void GameScene::update(float dt)
 
     // [ĐÃ SỬA] Chạy update tổng của World và truyền thẳng GameInput vào
     world.update(dt, _gameInput);
+
+    // KIỂM TRA SINH TỬ
+    // Nếu hệ thống dọn rác đã xóa Player -> Game Over
+    if (world.playerEntity != -1 && world.transforms.count(world.playerEntity) == 0)
+    {
+        // Chặn update để tránh lỗi
+        _isGamePaused = true;
+
+        // Chuyển sang màn hình End Game
+        SceneManager::getInstance()->goToGameOverScene();
+        return;
+    }
 
     // Kiểm tra xem người chơi có đang giữ bất kỳ phím di chuyển nào không (WASD)
     bool isMoving = _gameInput->isKeyPressed(ax::EventKeyboard::KeyCode::KEY_W) ||

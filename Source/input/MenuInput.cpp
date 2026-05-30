@@ -1,6 +1,7 @@
 #include "input/MenuInput.h"
 #include "scene/StartScene.h"
 #include "scene/settings/SettingsLayer.h"
+#include "scene/GameOverScene.h"
 
 USING_NS_AX;
 
@@ -31,7 +32,21 @@ void MenuInput::onKeyPressed(EventKeyboard::KeyCode keyCode, Event* event)
         return;
     }
 
-    // 2. Kiểm tra nếu đối tượng điều khiển là SettingsLayer
+    // 2. Kiểm tra nếu đối tượng là GameOverScene
+    auto gameOverScene = dynamic_cast<GameOverScene*>(_target);
+    if (gameOverScene)
+    {
+        if (keyCode == EventKeyboard::KeyCode::KEY_UP_ARROW || keyCode == EventKeyboard::KeyCode::KEY_W)
+            gameOverScene->moveSelectionUp();
+        else if (keyCode == EventKeyboard::KeyCode::KEY_DOWN_ARROW || keyCode == EventKeyboard::KeyCode::KEY_S)
+            gameOverScene->moveSelectionDown();
+        else if (keyCode == EventKeyboard::KeyCode::KEY_ENTER || keyCode == EventKeyboard::KeyCode::KEY_SPACE)
+            gameOverScene->executeSelection();
+        return;
+    }
+
+
+    // 3. Kiểm tra nếu đối tượng điều khiển là SettingsLayer
     auto settings = dynamic_cast<SettingsLayer*>(_target);
     if (settings)
     {
@@ -64,6 +79,7 @@ void MenuInput::onKeyPressed(EventKeyboard::KeyCode keyCode, Event* event)
         case EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
             settings->navigateRight();
             break;
+        case EventKeyboard::KeyCode::KEY_BACKSPACE:
         case EventKeyboard::KeyCode::KEY_ENTER:
             settings->confirmSelection();
             break;
