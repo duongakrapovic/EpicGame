@@ -32,16 +32,14 @@ void World::init(Scene* scene)
 
     camera.setZoom(worldNode, 3.0f);
 
-    auto configs = ConfigLoader::loadEntityConfig("configs/entity_config.json");
+    _entityConfigs = ConfigLoader::loadEntityConfig("configs/entity_config.json");
 
     srand((unsigned int)time(NULL));
 
-    // Tạo Player trước
-    playerEntity = EntityFactory::create(*this, configs["player"], 100.0f, 100.0f);
-
+    playerEntity = EntityFactory::create(*this, _entityConfigs.at("player"), 500, 500);
 
     // 1. SPAWN ORC
-    int orcCount    = 50;
+    int orcCount = 50;
     for (int k = 0; k < orcCount; k++)
     {
         float orcX = 0, orcY = 0;
@@ -54,7 +52,8 @@ void World::init(Scene* scene)
             if (!map.isCollision(testBox))
                 safeOrc = true;
         }
-        EntityFactory::create(*this, configs["orc"], orcX, orcY);
+
+        EntityFactory::create(*this, _entityConfigs.at("orc"), orcX, orcY);
     }
 
     // 2. SPAWN OLDMAN
@@ -71,12 +70,35 @@ void World::init(Scene* scene)
             if (!map.isCollision(testBox))
                 safeNpc = true;
         }
-        EntityFactory::create(*this, configs["oldman"], npcX, npcY);
+
+        EntityFactory::create(*this, _entityConfigs.at("oldman"), npcX, npcY);
     }
 }
 
 void World::update(float dt, GameInput* input)
 {
+    // SPANNER QUÁI VẬT THEO ĐỢT
+    _spawnTimer += dt;
+    if (_spawnTimer >= 8.0f)  // 8 giây gen 1 lần
+    {
+        _spawnTimer    = 0.0f;
+        int spawnCount = 3;
+
+        for (int k = 0; k < spawnCount; k++)
+        {
+            float orcX = 0, orcY = 0;
+            bool safeOrc = false;
+            while (!safeOrc)
+            {
+                orcX = 16.0f + (float)(rand() % (1536 - 16));
+                orcY = 16.0f + (float)(rand() % (1536 - 16));
+                ax::Rect testBox(orcX - 14, orcY - 14, 28, 28);
+                if (!map.isCollision(testBox))
+                    safeOrc = true;
+            }
+            EntityFactory::create(*this, _entityConfigs.at("orc"), orcX, orcY);
+        }
+    }
     // 1. Nhận lệnh từ bàn phím
     Systems::UpdateInput(*this, input);
 
@@ -106,9 +128,59 @@ void World::update(float dt, GameInput* input)
         camera.follow(worldNode, pPos, currentZoom);
     }
 
-    // ==========================================
+    // 7.5. HỆ THỐNG NHẶT ĐỒ (PICKUP SYSTEM)
+    if (playerEntity != -1 && transforms.count(playerEntity) && collisions.count(playerEntity))
+    {
+        // Lấy hộp va chạm của Player
+        ax::Rect playerBox = collisions[playerEntity].getWorldHitbox(transforms[playerEntity].position);
+        auto& pHealth      = healths[playerEntity];
+
+        for (auto& [itemEntity, itemCol] : collisions)
+        {
+            // Chỉ kiểm tra những Entity là Item và chưa bị xóa sổ
+            if (itemCol.type == CollisionType::Item && healths.count(itemEntity) && !healths[itemEntity].isDead &&
+                animations.count(itemEntity))
+            {
+                // Lấy hộp va chạm của vật phẩm rơi trên đất
+                ax::Rect itemBox = itemCol.getWorldHitbox(transforms[itemEntity].position);
+
+                // NẾU CHẠM VÀO NHAU (NHẶT ĐƯỢC)
+                if (playerBox.intersectsRect(itemBox))
+                {
+                    // Mẹo: Dùng đường dẫn hình ảnh để phân biệt bình máu hay bình mana
+                    std::string itemName = animations[itemEntity].basePath;
+
+                    if (itemName.find("health") != std::string::npos)  // Nếu là bình MÁU
+                    {
+                        int healAmount = _entityConfigs.at("health_potion").heal_hp;
+
+                        pHealth.hp += healAmount;
+                        if (pHealth.hp > pHealth.maxHp)
+                            pHealth.hp = pHealth.maxHp;
+                        if (hud)
+                            hud->updateHP(pHealth.hp, pHealth.maxHp);
+                        AXLOG("Nhat duoc Binh Mau! HP hien tai: %d", pHealth.hp);
+                    }
+                    else if (itemName.find("mana") != std::string::npos)  // Nếu là bình MANA
+                    {
+                        int healAmount = _entityConfigs.at("mana_potion").heal_mana;
+
+                        pHealth.mana += healAmount;
+                        if (pHealth.mana > pHealth.maxMana)
+                            pHealth.mana = pHealth.maxMana;
+                        if (hud)
+                            hud->updateMana(pHealth.mana, pHealth.maxMana);
+                        AXLOG("Nhat duoc Binh Mana! MP hien tai: %d", pHealth.mana);
+                    }
+
+                    // Đánh dấu vật phẩm đã chết, để Lò Dọn Rác (Bước 8) ở ngay bên dưới tự động phi tang nó
+                    healths[itemEntity].isDead = true;
+                }
+            }
+        }
+    }
+
     // 8. HỆ THỐNG DỌN RÁC (DESTROY DEAD ENTITIES)
-    // ==========================================
     std::vector<Entity> deadEntities;
 
     // Quét tìm những kẻ đã hết máu
@@ -123,6 +195,25 @@ void World::update(float dt, GameInput* input)
     // Tiến hành xóa sổ hoàn toàn khỏi thế giới
     for (Entity e : deadEntities)
     {
+        // QUÁI CHẾT RỚT ĐỒ NGẪU NHIÊN
+        if (collisions.count(e) && collisions[e].type == CollisionType::Enemy)
+        {
+            if (transforms.count(e))
+            {
+                ax::Vec2 deathPos = transforms[e].position;
+
+                int dropChance = rand() % 100;  // Quay số từ 0 -> 99
+                if (dropChance < 50)            // Tỉ lệ 50% rớt đồ
+                {
+                    // Lắc xúc xắc tiếp xem rớt máu hay rớt mana
+                    std::string dropItem = (rand() % 2 == 0) ? "health_potion" : "mana_potion";
+
+                    // Gọi Factory gen đồ rơi rớt ra đất            
+                    EntityFactory::create(*this, _entityConfigs.at(dropItem), deathPos.x, deathPos.y);
+                    AXLOG("Quai vat chet rot ra: %s!", dropItem.c_str());
+                }
+            }
+        }
         // Xóa hình ảnh khỏi màn hình Axmol
         if (sprites.count(e))
         {
@@ -140,5 +231,14 @@ void World::update(float dt, GameInput* input)
         ais.erase(e);
 
         AXLOG("Entity [%d] da bi tieu diet va xoa khoi map!", e);
+    }  // KẾT THÚC VÒNG LẶP XÓA Ở ĐÂY
+
+    // [ĐÃ SỬA] IN LOG TỔNG SỐ QUÁI LIÊN TỤC MỖI FRAME 
+    int currentEnemyCount = 0;
+    for (auto& [e, col] : collisions)
+    {
+        if (col.type == CollisionType::Enemy)
+            currentEnemyCount++;
     }
+    AXLOG("TONG SO QUAI HIEN TAI: %d", currentEnemyCount);
 }

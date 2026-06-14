@@ -28,6 +28,10 @@ struct EntityConfig
     float atk_thick    = 10.0f;
     float atk_offset   = 15.0f;
     float sprite_shift = 0.0f;
+
+    //item
+    int heal_hp   = 0;
+    int heal_mana = 0;
 };
 
 class ConfigLoader

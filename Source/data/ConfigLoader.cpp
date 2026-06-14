@@ -58,8 +58,6 @@ std::unordered_map<std::string, EntityConfig> ConfigLoader::loadEntityConfig(con
             cfg.max_mana = obj["max_mana"].GetInt();
         if (obj.HasMember("mana_regen"))
             cfg.mana_regen = obj["mana_regen"].GetFloat();
-        
-
 
         if (obj.HasMember("damage"))
             cfg.damage = obj["damage"].GetInt();
@@ -76,7 +74,12 @@ std::unordered_map<std::string, EntityConfig> ConfigLoader::loadEntityConfig(con
 
         if (obj.HasMember("frames"))
             cfg.frames = obj["frames"].GetInt();
-        
+
+        if (obj.HasMember("heal_hp"))
+            cfg.heal_hp = obj["heal_hp"].GetInt();
+        if (obj.HasMember("heal_mana"))
+            cfg.heal_mana = obj["heal_mana"].GetInt();
+
         configs[key] = cfg;
     }
     return configs;

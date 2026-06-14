@@ -6,6 +6,7 @@
 #include "camera/CameraController.h"
 #include "map/MapManager.h"
 #include "ui/HUD.h"
+#include "data/ConfigLoader.h"
 
 class GameInput;  // Forward declaration
 
@@ -21,6 +22,12 @@ public:
     MapManager map;
 
     Entity playerEntity = -1;
+
+    // Lưu lại bộ config để dùng mọi lúc mọi nơi
+    std::unordered_map<std::string, EntityConfig> _entityConfigs;
+
+    // Đồng hồ đếm thời gian đẻ quái
+    float _spawnTimer = 0.0f;
 
     // COMPONENT STORAGE
     std::unordered_map<Entity, TransformComponent> transforms;

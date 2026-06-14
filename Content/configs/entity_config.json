@@ -54,5 +54,29 @@
         "atk_offset": 8.0,
         "sprite_shift": 13.0,
         "frames": 2
+    },
+    "health_potion": {
+        "type": "item",
+        "sprite": "sprites/items/healthposion",
+        "scale": 1.0,
+        "speed": 0,
+        "hitbox_w": 16,
+        "hitbox_h": 16,
+        "offset_x": 0,
+        "offset_y": 0,
+        "frames": 1,
+        "heal_hp": 20
+    },
+    "mana_potion": {
+        "type": "item",
+        "sprite": "sprites/items/manaposion",
+        "scale": 1.0,
+        "speed": 0,
+        "hitbox_w": 16,
+        "hitbox_h": 16,
+        "offset_x": 0,
+        "offset_y": 0,
+        "frames": 1,
+        "heal_mana": 20
     }
 }
