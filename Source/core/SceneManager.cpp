@@ -40,8 +40,8 @@ void SceneManager::goToGameScene()
     Director::getInstance()->replaceScene(TransitionFade::create(1.0f, scene, Color3B::BLACK));
 }
 
-void SceneManager::goToGameOverScene()
+void SceneManager::goToGameOverScene(int finalKills, int finalGold)
 {
-    auto scene = utils::createInstance<GameOverScene>();
+    auto scene = GameOverScene::createWithStats(finalKills, finalGold);
     Director::getInstance()->replaceScene(TransitionFade::create(1.0f, scene, Color3B::BLACK));
 }

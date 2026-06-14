@@ -35,9 +35,16 @@ Entity EntityFactory::create(World& world, const EntityConfig& cfg, float x, flo
     // Khởi tạo Chỉ số sinh tồn
     HealthComponent health;
     health.maxHp     = cfg.max_hp;
-    health.hp        = cfg.max_hp;
+    health.hp        = cfg.max_hp;  // Sinh ra là đầy máu
+
+    // Nạp dữ liệu Thể lực thực tế từ JSON
+    health.maxStamina       = cfg.max_stamina;
+    health.stamina          = cfg.max_stamina;
+    health.staminaRegenRate = cfg.stamina_regen;
+
     health.maxMana   = cfg.max_mana;
-    health.mana      = cfg.max_mana;
+    health.mana      = cfg.max_mana; // Sinh ra là đầy Mana
+    health.manaRegenRate = cfg.mana_regen;// Lấy tốc độ hồi Mana từ JSON
     world.healths[e] = health;
 
     // Khởi tạo Hồ sơ chiến đấu (Hoàn toàn lấy từ file cấu hình)

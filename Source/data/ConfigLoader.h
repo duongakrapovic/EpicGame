@@ -15,7 +15,10 @@ struct EntityConfig
     float offset_y = 0.0f;
 
     int max_hp   = 1;
+    int max_stamina = 0;
+    float stamina_regen = 0.0f; // thời gian hồi 1 stamina
     int max_mana = 0;
+    float mana_regen = 1.0f; // thời gian hồi 1 mana
     int damage   = 0;
     int frames   = 1;
 

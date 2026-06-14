@@ -37,6 +37,7 @@ std::unordered_map<std::string, EntityConfig> ConfigLoader::loadEntityConfig(con
         if (obj.HasMember("speed"))
             cfg.speed = obj["speed"].GetFloat();
 
+
         if (obj.HasMember("hitbox_w"))
             cfg.hitbox_w = obj["hitbox_w"].GetFloat();
         if (obj.HasMember("hitbox_h"))
@@ -46,26 +47,36 @@ std::unordered_map<std::string, EntityConfig> ConfigLoader::loadEntityConfig(con
         if (obj.HasMember("offset_y"))
             cfg.offset_y = obj["offset_y"].GetFloat();
 
+
         if (obj.HasMember("max_hp"))
             cfg.max_hp = obj["max_hp"].GetInt();
+        if (obj.HasMember("max_stamina"))
+            cfg.max_stamina = obj["max_stamina"].GetInt();
+        if (obj.HasMember("stamina_regen"))
+            cfg.stamina_regen = obj["stamina_regen"].GetFloat();
         if (obj.HasMember("max_mana"))
             cfg.max_mana = obj["max_mana"].GetInt();
+        if (obj.HasMember("mana_regen"))
+            cfg.mana_regen = obj["mana_regen"].GetFloat();
+        
+
+
         if (obj.HasMember("damage"))
             cfg.damage = obj["damage"].GetInt();
-        if (obj.HasMember("frames"))
-            cfg.frames = obj["frames"].GetInt();
-
         if (obj.HasMember("atk_len"))
             cfg.atk_len = obj["atk_len"].GetFloat();
         if (obj.HasMember("atk_thick"))
             cfg.atk_thick = obj["atk_thick"].GetFloat();
         if (obj.HasMember("atk_offset"))
-            cfg.atk_offset = obj["atk_offset"].GetFloat();
-        if (obj.HasMember("sprite_shift"))
-            cfg.sprite_shift = obj["sprite_shift"].GetFloat();
+            cfg.atk_offset = obj["atk_offset"].GetFloat();     
         if (obj.HasMember("atk_cooldown"))
             cfg.atk_cooldown = obj["atk_cooldown"].GetFloat();
+        if (obj.HasMember("sprite_shift"))
+            cfg.sprite_shift = obj["sprite_shift"].GetFloat();
 
+        if (obj.HasMember("frames"))
+            cfg.frames = obj["frames"].GetInt();
+        
         configs[key] = cfg;
     }
     return configs;

@@ -53,7 +53,7 @@ bool GameOverScene::init()
         auto btn = Sprite::create(btnFiles[i]);
         if (btn)
         {
-            btn->setPosition(Vec2(visibleSize.width / 2 + origin.x, startY - (i * gapY)));
+            btn->setPosition(Vec2(visibleSize.width * 0.5f + origin.x, startY - (i * gapY)));
 
             // Set size riêng cho từng thằng
             btn->setScale(customScales[i]);
@@ -68,6 +68,26 @@ bool GameOverScene::init()
 
     _currentIndex = 0;
     updateSelectionVisuals();
+
+
+    // --- IN BẢNG ĐIỂM ---
+    float textStartY = visibleSize.height * 0.45f;
+
+    auto lblKills = Label::createWithTTF("KILLS: " + std::to_string(_finalKills), "fonts/Marker Felt.ttf", 40);
+    if (lblKills)
+    {
+        lblKills->setPosition(Vec2(visibleSize.width * 0.25f + origin.x, textStartY));
+        lblKills->setColor(Color3B::RED);
+        this->addChild(lblKills, 2);
+    }
+
+    auto lblGold = Label::createWithTTF("GOLD: " + std::to_string(_finalGold), "fonts/Marker Felt.ttf", 40);
+    if (lblGold)
+    {
+        lblGold->setPosition(Vec2(visibleSize.width * 0.25f + origin.x, textStartY - 50));  // Nằm dưới Kills 50 pixel
+        lblGold->setColor(Color3B::YELLOW);
+        this->addChild(lblGold, 2);
+    }
 
     new MenuInput(this);
 
@@ -136,4 +156,18 @@ void GameOverScene::executeSelection()
     {
         Director::getInstance()->end();
     }
+}
+
+GameOverScene* GameOverScene::createWithStats(int kills, int gold)
+{
+    GameOverScene* scene = new GameOverScene();
+    scene->_finalKills   = kills;  // Cất Kills vào túi
+    scene->_finalGold    = gold;   // Cất Gold vào túi
+    if (scene && scene->init())
+    {
+        scene->autorelease();
+        return scene;
+    }
+    AX_SAFE_DELETE(scene);
+    return nullptr;
 }

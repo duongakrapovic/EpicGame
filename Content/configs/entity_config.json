@@ -8,8 +8,13 @@
         "hitbox_h": 12,
         "offset_x": 0,
         "offset_y": -2,
+
         "max_hp": 100,
-        "max_mana": 50,
+        "max_stamina": 100,
+        "stamina_regen": 10,
+        "max_mana": 100,
+        "mana_regen": 4,
+
         "damage": 20,
         "atk_cooldown": 0.3,
         "atk_len": 15.0,
@@ -42,7 +47,7 @@
         "offset_x": 0,
         "offset_y": -2,
         "max_hp": 50,
-        "damage": 10,
+        "damage": 5,
         "atk_cooldown": 1.5,
         "atk_len": 23.0,
         "atk_thick": 18.0,

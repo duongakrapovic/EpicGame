@@ -3,6 +3,7 @@
 #include "ecs/systems/Systems.h"
 #include "audio/AudioManager.h"
 #include "core/SceneManager.h"
+#include "ui/HUD.h"
 USING_NS_AX;
 
 bool GameScene::init()
@@ -11,6 +12,22 @@ bool GameScene::init()
         return false;
 
     world.init(this);
+    // --- KHỞI TẠO HUD ---
+    auto hud = HUD::create();
+    if (hud)
+    {
+        this->addChild(hud, 100);
+        world.hud = hud;
+
+        // Ngay khi có HUD, lấy máu gốc của Player đổ lên màn hình
+        if (world.healths.count(world.playerEntity))
+        {
+            auto& pHealth = world.healths[world.playerEntity];
+            hud->updateHP(pHealth.hp, pHealth.maxHp);
+            hud->updateStamina(pHealth.stamina, pHealth.maxStamina);
+            hud->updateMana(pHealth.mana, pHealth.maxMana);
+        }
+    }
     scheduleUpdate();
 
     _gameInput = new GameInput(this);
@@ -34,11 +51,19 @@ void GameScene::update(float dt)
     // Nếu hệ thống dọn rác đã xóa Player -> Game Over
     if (world.playerEntity != -1 && world.transforms.count(world.playerEntity) == 0)
     {
-        // Chặn update để tránh lỗi
         _isGamePaused = true;
 
-        // Chuyển sang màn hình End Game
-        SceneManager::getInstance()->goToGameOverScene();
+        // 1. Mở sổ của HUD ra xem tổng kết
+        int finalKills = 0;
+        int finalGold  = 0;
+        if (world.hud)
+        {
+            finalKills = world.hud->getKillCount();
+            finalGold  = world.hud->getGoldCount();
+        }
+
+        // 2. Giao số liệu cho SceneManager chở đi sang màn Game Over
+        SceneManager::getInstance()->goToGameOverScene(finalKills, finalGold);
         return;
     }
 

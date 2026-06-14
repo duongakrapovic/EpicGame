@@ -5,6 +5,7 @@
 #include "ecs/Components.h"
 #include "camera/CameraController.h"
 #include "map/MapManager.h"
+#include "ui/HUD.h"
 
 class GameInput;  // Forward declaration
 
@@ -39,6 +40,8 @@ public:
     void update(float dt, GameInput* input);  // Đã sửa để nhận con trỏ Input
 
     Entity createEntity();
+
+    HUD* hud = nullptr;
 
 private:
     int nextEntity = 0;

@@ -13,6 +13,13 @@ public:
     void moveSelectionDown();
     void executeSelection();
 
+    // Hàm tĩnh dùng để khởi tạo Scene kèm theo điểm số
+    static GameOverScene* createWithStats(int kills, int gold);
+
+    // Biến lưu tạm
+    int _finalKills = 0;
+    int _finalGold  = 0;
+
 private:
     void updateSelectionVisuals();
 

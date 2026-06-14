@@ -75,12 +75,23 @@ struct CollisionComponent
 
 struct HealthComponent
 {
-    int hp                = 100;
-    int maxHp             = 100;
-    int mana              = 50;
-    int maxMana           = 50;
+    int hp    = 100;
+    int maxHp = 100;
+
+    // Hệ thống Thể lực 
+    int stamina              = 50;
+    int maxStamina           = 50;
+    float staminaRegenRate   = 0.5f;
+    float staminaAccumulator = 0.0f;
+
+    // Mana thực sự cho hệ thống phép thuật 
+    int mana    = 0;
+    int maxMana = 0;
+    float manaRegenRate = 1.0f;
+    float manaAccumulator = 1.0f;
+
     bool isDead           = false;
-    float invincibleTimer = 0.0f;  // Đồng hồ đếm ngược I-Frames khi trúng đòn
+    float invincibleTimer = 0.0f;
 };
 
 struct CombatComponent
