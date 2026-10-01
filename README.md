@@ -21,7 +21,7 @@ Enter the project directory:
 cd <PROJECT_FOLDER>
 
 The project should contain files and folders similar to:
-
+```text
 .
 ├── Content/
 ├── Source/
@@ -43,6 +43,8 @@ The project should contain files and folders similar to:
 ├── run.bat
 ├── run.bat.in
 └── README.md
+```
+
 3. Build the Project
 - in visual studio , build -> build all
 - the mode after will be x64-debug and it might let u run the exe file
@@ -52,13 +54,17 @@ The project should contain files and folders similar to:
 
 If the build directory becomes corrupted or CMake configuration needs to be regenerated, remove the generated build directory and build again:
 
+```bat
 rmdir /s /q build
+```
 
 Then:
 
+```bat
 .\build.bat
-6. Project Structure
+```
+5. Project Structure
 content for tileset, picture,...
 source for the code
-7 note
+6. note
 the project and the engine are not easy to install becase of compatibility issue, pls use AI to solve ur problem 
