@@ -2,7 +2,7 @@
 #include "axmol.h"
 #include <string>
 
-struct TransformComponent
+struct TransformComponent// lưu vị trí của enity
 {
     ax::Vec2 position;
 };

@@ -1,10 +1,57 @@
+# =========================
+# Build directories
+# =========================
+
 build/
+out/
 .vs/
+
+
+# =========================
+# C/C++ build artifacts
+# =========================
+
+*.obj
 *.pdb
 *.lib
+*.dll
+*.exe
 *.ilk
 *.ipch
-*.obj
-*.db
-*.exe
-*.dll
+
+
+# =========================
+# CMake
+# =========================
+
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+
+
+# =========================
+# Ninja
+# =========================
+
+.ninja_deps
+.ninja_log
+build.ninja
+
+
+# =========================
+# Visual Studio
+# =========================
+
+*.suo
+*.user
+*.VC.db
+
+
+# =========================
+# OS
+# =========================
+
+Thumbs.db
+Desktop.ini
